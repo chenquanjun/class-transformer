@@ -38,11 +38,6 @@
     "test:watch": "jest --watch",
     "test:ci": "jest --runInBand --no-cache --coverage --verbose"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
   "lint-staged": {
     "*.md": [
       "npm run prettier:fix"

@@ -24,6 +24,14 @@ export interface ClassTransformOptions {
   groups?: string[];
 
   /**
+   * Only root object properties with given field gonna be transformed.
+   * If the "fields" parameter is used, the "groups" parameter at the root node will be ignored but it will not affect the child objects.
+   * For example, you have a group key like `sync` which means sync data, you change some value on object and you want to sync these changed parts
+   * then you can pass fields, nested object still use `sync` group to pack
+   */
+  fields?: string[];
+
+  /**
    * Only properties with "since" > version < "until" gonna be transformed.
    */
   version?: number;

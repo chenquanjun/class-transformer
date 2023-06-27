@@ -147,7 +147,7 @@ export class TransformOperationExecutor {
         this.recursionStack.add(value);
       }
 
-      const keys = this.getKeys(targetType as Function, value, isMap);
+      const keys = this.getKeys(targetType as Function, value, isMap, level);
       let newValue: any = source ? source : {};
       if (
         !source &&
@@ -426,7 +426,7 @@ export class TransformOperationExecutor {
     return meta ? meta.reflectedType : undefined;
   }
 
-  private getKeys(target: Function, object: Record<string, any>, isMap: boolean): string[] {
+  private getKeys(target: Function, object: Record<string, any>, isMap: boolean, level: number): string[] {
     // determine exclusion strategy
     let strategy = defaultMetadataStorage.getStrategy(target);
     if (strategy === 'none') strategy = this.options.strategy || 'exposeAll'; // exposeAll is default strategy
@@ -493,25 +493,40 @@ export class TransformOperationExecutor {
         });
       }
 
-      // apply grouping options
-      if (this.options.groups && this.options.groups.length) {
-        keys = keys.filter(key => {
-          const exposeMetadata = defaultMetadataStorage.findExposeMetadata(target, key);
-          if (!exposeMetadata || !exposeMetadata.options) return true;
-
-          return this.checkGroups(exposeMetadata.options.groups);
-        });
-      } else {
-        keys = keys.filter(key => {
-          const exposeMetadata = defaultMetadataStorage.findExposeMetadata(target, key);
-          return (
-            !exposeMetadata ||
-            !exposeMetadata.options ||
-            !exposeMetadata.options.groups ||
-            !exposeMetadata.options.groups.length
-          );
-        });
+      let useGroup = true;
+      if (level === 0) {
+        // only work on root level
+        const fields = this.options.fields;
+        if (fields) {
+          useGroup = false;
+          keys = keys.filter(key => {
+            return fields.includes(key);
+          });
+        }
       }
+
+      if (useGroup) {
+        // apply grouping options
+        if (this.options.groups && this.options.groups.length) {
+          keys = keys.filter(key => {
+            const exposeMetadata = defaultMetadataStorage.findExposeMetadata(target, key);
+            if (!exposeMetadata || !exposeMetadata.options) return true;
+  
+            return this.checkGroups(exposeMetadata.options.groups);
+          });
+        } else {
+          keys = keys.filter(key => {
+            const exposeMetadata = defaultMetadataStorage.findExposeMetadata(target, key);
+            return (
+              !exposeMetadata ||
+              !exposeMetadata.options ||
+              !exposeMetadata.options.groups ||
+              !exposeMetadata.options.groups.length
+            );
+          });
+        }
+      }
+
     }
 
     // exclude prefixed properties
